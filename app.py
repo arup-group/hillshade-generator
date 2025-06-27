@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 # Initialize WhiteboxTools
 wbt = whitebox.WhiteboxTools()
-wbt.set_whitebox_dir("whitebox/whiteboxtools_binaries/WhiteboxTools_win_amd64/WBT")  # path to the binary
+wbt.set_whitebox_dir("whitebox/WhiteboxTools_linux_amd64/WhiteboxTools_linux_amd64/WBT")  # path to the binary
 wbt.verbose = True  # Enable verbose output for debugging
 
 st.title("DEM Hillshade Generator using WhiteboxTools")
