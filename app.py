@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import os
 import subprocess
@@ -6,6 +5,7 @@ import stat
 from tempfile import NamedTemporaryFile
 import rasterio
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import numpy as np
 from pysheds.grid import Grid
 
@@ -87,9 +87,10 @@ if uploaded_file:
     try:
         grid = Grid.from_raster(input_path, data_name='dem')
         dem = grid.read_raster(input_path)
+        grid.add_gridded_data(dem, data_name='dem', affine=grid.affine)
 
         # Condition DEM
-        pit_filled_dem = grid.fill_pits(dem)
+        pit_filled_dem = grid.fill_pits(grid.dem)
         flooded_dem = grid.fill_depressions(pit_filled_dem)
         inflated_dem = grid.resolve_flats(flooded_dem)
 
@@ -99,25 +100,38 @@ if uploaded_file:
         # Compute and store flow direction
         grid.flowdir(inflated_dem, dirmap=dirmap, out_name='dir', nodata_out=np.int32(-1))
 
+        # Visualize flow direction
+        fdir = grid.view('dir', nodata=np.nan)
+        fig_fd, ax_fd = plt.subplots(figsize=(8, 6))
+        fig_fd.patch.set_alpha(0)
+        im_fd = ax_fd.imshow(fdir, extent=grid.extent, cmap='viridis', zorder=2)
+        boundaries = [0] + sorted(list(dirmap))
+        plt.colorbar(im_fd, ax=ax_fd, boundaries=boundaries, values=sorted(dirmap))
+        ax_fd.set_xlabel('Longitude')
+        ax_fd.set_ylabel('Latitude')
+        ax_fd.set_title('Flow Direction Grid')
+        ax_fd.grid(zorder=-1)
+        plt.tight_layout()
+        st.pyplot(fig_fd)
+
         # Compute flow accumulation
         grid.accumulation(data='dir', out_name='acc')
-
         acc = grid.view('acc', nodata=np.nan)
-        fdir = grid.view('dir', nodata=np.nan)
 
-        # Flow Accumulation Plot
-        fig2, ax2 = plt.subplots()
-        ax2.imshow(np.log1p(acc), cmap='cubehelix', zorder=1)
-        ax2.set_title("Flow Accumulation (log-scaled)")
-        ax2.axis("off")
-        st.pyplot(fig2)
-
-        # Flow Direction Plot
-        fig3, ax3 = plt.subplots()
-        im = ax3.imshow(fdir, cmap='twilight', interpolation='none')
-        ax3.set_title("Flow Direction (D8 Encoded)")
-        ax3.axis("off")
-        st.pyplot(fig3)
+        # Visualize flow accumulation
+        fig_acc, ax_acc = plt.subplots(figsize=(8, 6))
+        fig_acc.patch.set_alpha(0)
+        ax_acc.grid(True, zorder=0)
+        im_acc = ax_acc.imshow(acc, extent=grid.extent, zorder=2,
+                               cmap='cubehelix',
+                               norm=colors.LogNorm(vmin=1, vmax=np.nanmax(acc)),
+                               interpolation='bilinear')
+        plt.colorbar(im_acc, ax=ax_acc, label='Upstream Cells')
+        ax_acc.set_title('Flow Accumulation')
+        ax_acc.set_xlabel('Longitude')
+        ax_acc.set_ylabel('Latitude')
+        plt.tight_layout()
+        st.pyplot(fig_acc)
 
     except Exception as e:
         st.error(f"PySheds processing failed: {e}")
