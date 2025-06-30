@@ -86,16 +86,19 @@ if uploaded_file:
 
     try:
         grid = Grid.from_raster(input_path, data_name='dem')
-        grid.fill_depressions(data='dem', out_name='filled')
-        grid.resolve_flats(data='filled', out_name='inflated')
+        dem = grid.read_raster(input_path)
+        grid.add_gridded_data(dem, data_name='dem', affine=grid.affine)
+
+        filled = grid.fill_depressions(grid.dem)
+        inflated = grid.resolve_flats(filled)
 
         # Define D8 direction mapping
         dirmap = np.array([[  32,  64, 128],
-                           [  16,   0,   1],
-                           [   8,   4,   2]])
+                        [  16,   0,   1],
+                        [   8,   4,   2]])
 
         # Compute flow direction with nodata_out = -1
-        grid.flowdir(data='inflated', out_name='dir', dirmap=dirmap, nodata_out=np.int32(-1))
+        grid.flowdir(inflated, dirmap=dirmap, out_name='dir', nodata_out=np.int32(-1))
         grid.accumulation(data='dir', out_name='acc')
 
         acc = grid.view('acc', nodata=np.nan)
