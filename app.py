@@ -12,7 +12,7 @@ wbt_module.download_wbt = lambda: None
 # Now safely initialize
 wbt = wbt_module.WhiteboxTools()
 wbt.set_whitebox_dir("tools/WBT")
-wbt.verbose = True
+wbt.set_verbose_mode(True)
 
 st.title("DEM Hillshade Generator using WhiteboxTools")
 
@@ -39,6 +39,11 @@ if uploaded_file:
         st.error(f"WhiteboxTools failed: {e}")
         st.stop()
 
+    
+    # Check if output path is valid
+    st.write("Expected output path:", output_path)
+    st.write("Output exists:", os.path.exists(output_path))
+    
     if not os.path.exists(output_path):
         st.error("Hillshade file was not created. Please check the input DEM file.")
         st.stop()
