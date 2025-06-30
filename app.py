@@ -85,22 +85,30 @@ if uploaded_file:
     st.write("Computing flow direction and accumulation with PySheds...")
 
     try:
+        # Initialize grid and read DEM once
         grid = Grid.from_raster(input_path)
-        dem = grid.read_raster(input_path)
+        with rasterio.open(input_path) as src:
+            dem = src.read(1)
 
         # Condition DEM
-        pit_filled_dem = grid.fill_pits(dem)
-        flooded_dem = grid.fill_depressions(pit_filled_dem)
-        inflated_dem = grid.resolve_flats(flooded_dem)
+        pit_filled = grid.fill_pits(dem)
+        depression_filled = grid.fill_depressions(pit_filled)
+        inflated = grid.resolve_flats(depression_filled)
 
         # D8 direction mapping
         dirmap = (64, 128, 1, 2, 4, 8, 16, 32)
 
-        # Compute and store flow direction
-        grid.flowdir(inflated_dem, dirmap=dirmap, out_name='dir', nodata_out=np.int32(-1))
+        # Compute flow direction
+        grid.flowdir(inflated, dirmap=dirmap, out_name='dir', nodata_out=np.int32(-1))
 
-        # Visualize flow direction
+        # Compute flow accumulation
+        grid.accumulation(data='dir', out_name='acc')
+
+        # View results
         fdir = grid.view('dir', nodata=np.nan)
+        acc = grid.view('acc', nodata=np.nan)
+
+        # Flow Direction Plot
         fig_fd, ax_fd = plt.subplots(figsize=(8, 6))
         fig_fd.patch.set_alpha(0)
         im_fd = ax_fd.imshow(fdir, extent=grid.extent, cmap='viridis', zorder=2)
@@ -113,11 +121,7 @@ if uploaded_file:
         plt.tight_layout()
         st.pyplot(fig_fd)
 
-        # Compute flow accumulation
-        grid.accumulation(data='dir', out_name='acc')
-        acc = grid.view('acc', nodata=np.nan)
-
-        # Visualize flow accumulation
+        # Flow Accumulation Plot
         fig_acc, ax_acc = plt.subplots(figsize=(8, 6))
         fig_acc.patch.set_alpha(0)
         ax_acc.grid(True, zorder=0)
