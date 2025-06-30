@@ -105,8 +105,8 @@ if uploaded_file:
         grid.accumulation(data='dir', out_name='acc')
 
         # View results
-        fdir = grid.view('dir', nodata=np.nan)
-        acc = grid.view('acc', nodata=np.nan)
+        fdir = grid.view('dir')
+        acc = grid.view('acc')
 
         # Flow Direction Plot
         fig_fd, ax_fd = plt.subplots(figsize=(8, 6))
