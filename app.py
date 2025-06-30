@@ -114,7 +114,7 @@ if uploaded_file:
         plt.tight_layout()
 
         # Compute flow accumulation
-        acc = grid.accumulation(fdir, dirmap=dirmap)
+        acc = grid.accumulation(fdir, dirmap=dirmap, nodata_out=np.int32(-1))
 
         fig, ax = plt.subplots(figsize=(8,6))
         fig.patch.set_alpha(0)
