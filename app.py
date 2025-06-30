@@ -87,8 +87,7 @@ if uploaded_file:
     try:
         # Initialize grid and read DEM once
         grid = Grid.from_raster(input_path)
-        with rasterio.open(input_path) as src:
-            dem = src.read(1)
+        dem = grid.read_raster(input_path)
 
         # Condition DEM
         pit_filled = grid.fill_pits(dem)
