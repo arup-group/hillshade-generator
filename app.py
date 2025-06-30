@@ -7,9 +7,8 @@ import rasterio
 import matplotlib.pyplot as plt
 
 # Initialize WhiteboxTools
-wbt = WhiteboxTools(exe_path="tools/WBT/whitebox_tools")  # Direct path to the binary
+wbt = WhiteboxTools(exe_path="tools/WBT/whitebox_tools")
 wbt.verbose = True
-
 
 st.title("DEM Hillshade Generator using WhiteboxTools")
 
