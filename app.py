@@ -85,7 +85,7 @@ if uploaded_file:
     st.write("Computing flow direction and accumulation with PySheds...")
 
     try:
-        grid = Grid.from_raster(input_path, data_name='dem')
+        grid = Grid.from_raster(input_path)
         dem = grid.read_raster(input_path)
 
         # Condition DEM
