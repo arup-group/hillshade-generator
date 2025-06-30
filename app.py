@@ -1,13 +1,17 @@
 # app.py
 import streamlit as st
-from whitebox.whitebox_tools import WhiteboxTools
 import os
 from tempfile import NamedTemporaryFile
 import rasterio
 import matplotlib.pyplot as plt
+import whitebox.whitebox_tools as wbt_module
 
-# Initialize WhiteboxTools
-wbt = WhiteboxTools(exe_path="tools/WBT/whitebox_tools")
+# Override the download function to do nothing
+wbt_module.download_wbt = lambda: None
+
+# Now safely initialize
+wbt = wbt_module.WhiteboxTools()
+wbt.set_whitebox_dir("tools/WBT")
 wbt.verbose = True
 
 st.title("DEM Hillshade Generator using WhiteboxTools")
