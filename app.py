@@ -87,10 +87,9 @@ if uploaded_file:
     try:
         grid = Grid.from_raster(input_path, data_name='dem')
         dem = grid.read_raster(input_path)
-        grid.add_gridded_data(dem, data_name='dem', affine=grid.affine)
 
         # Condition DEM
-        pit_filled_dem = grid.fill_pits(grid.dem)
+        pit_filled_dem = grid.fill_pits(dem)
         flooded_dem = grid.fill_depressions(pit_filled_dem)
         inflated_dem = grid.resolve_flats(flooded_dem)
 
