@@ -1,18 +1,10 @@
 # app.py
 import streamlit as st
 import os
+import subprocess
 from tempfile import NamedTemporaryFile
 import rasterio
 import matplotlib.pyplot as plt
-import whitebox.whitebox_tools as wbt_module
-
-# Override the download function to do nothing
-wbt_module.download_wbt = lambda: None
-
-# Now safely initialize
-wbt = wbt_module.WhiteboxTools()
-wbt.set_whitebox_dir("tools/WBT")
-wbt.set_verbose_mode(True)
 
 st.title("DEM Hillshade Generator using WhiteboxTools")
 
@@ -26,24 +18,39 @@ if uploaded_file:
 
     output_path = input_path.replace(".tif", "_hillshade.tif")
 
-    # Run Hillshade
-    st.write("Generating hillshade...")
+    # Show input metadata
     try:
-        wbt.hillshade(
-            dem=input_path,
-            output=output_path,
-            azimuth=315.0,
-            altitude=45.0
-        )
+        with rasterio.open(input_path) as src:
+            st.write("DEM metadata:", src.meta)
     except Exception as e:
-        st.error(f"WhiteboxTools failed: {e}")
+        st.error(f"Failed to read DEM file: {e}")
         st.stop()
 
-    
-    # Check if output path is valid
+    # Run WhiteboxTools via subprocess
+    st.write("Generating hillshade...")
+    cmd = [
+        "tools/WBT/whitebox_tools",
+        "--run=Hillshade",
+        f"--dem={input_path}",
+        f"--output={output_path}",
+        "--azimuth=315.0",
+        "--altitude=45.0"
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        st.text("WhiteboxTools stdout:")
+        st.text(result.stdout)
+        st.text("WhiteboxTools stderr:")
+        st.text(result.stderr)
+    except Exception as e:
+        st.error(f"Failed to run whitebox_tools: {e}")
+        st.stop()
+
+    # Check if output was created
     st.write("Expected output path:", output_path)
     st.write("Output exists:", os.path.exists(output_path))
-    
+
     if not os.path.exists(output_path):
         st.error("Hillshade file was not created. Please check the input DEM file.")
         st.stop()
