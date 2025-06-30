@@ -51,17 +51,17 @@ if uploaded_file:
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
-        st.text("WhiteboxTools stdout:")
-        st.text(result.stdout)
-        st.text("WhiteboxTools stderr:")
-        st.text(result.stderr)
+        # st.text("WhiteboxTools stdout:")
+        # st.text(result.stdout)
+        # st.text("WhiteboxTools stderr:")
+        # st.text(result.stderr)
     except Exception as e:
         st.error(f"Failed to run whitebox_tools: {e}")
         st.stop()
 
     # Check if output was created
-    st.write("Expected output path:", output_path)
-    st.write("Output exists:", os.path.exists(output_path))
+    # st.write("Expected output path:", output_path)
+    # st.write("Output exists:", os.path.exists(output_path))
 
     if not os.path.exists(output_path):
         st.error("Hillshade file was not created. Please check the input DEM file.")
