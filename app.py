@@ -6,8 +6,10 @@ import stat
 from tempfile import NamedTemporaryFile
 import rasterio
 import matplotlib.pyplot as plt
+import numpy as np
+from pysheds.grid import Grid
 
-st.title("DEM Hillshade Generator using WhiteboxTools")
+st.title("DEM Hillshade & Flow Accumulation Generator")
 
 # Upload DEM
 uploaded_file = st.file_uploader("Upload a DEM file (GeoTIFF)", type=["tif", "tiff"])
@@ -30,10 +32,8 @@ if uploaded_file:
     # Ensure whitebox_tools is executable
     binary_path = "tools/WBT/whitebox_tools"
     if not os.access(binary_path, os.X_OK):
-        st.write("Setting executable permission on whitebox_tools...")
         try:
             os.chmod(binary_path, os.stat(binary_path).st_mode | stat.S_IEXEC)
-            st.write("Executable permission set.")
         except Exception as e:
             st.error(f"Failed to set executable permission: {e}")
             st.stop()
@@ -51,17 +51,13 @@ if uploaded_file:
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
-        # st.text("WhiteboxTools stdout:")
-        # st.text(result.stdout)
-        # st.text("WhiteboxTools stderr:")
-        # st.text(result.stderr)
+        st.text("WhiteboxTools stdout:")
+        st.text(result.stdout)
+        st.text("WhiteboxTools stderr:")
+        st.text(result.stderr)
     except Exception as e:
         st.error(f"Failed to run whitebox_tools: {e}")
         st.stop()
-
-    # Check if output was created
-    # st.write("Expected output path:", output_path)
-    # st.write("Output exists:", os.path.exists(output_path))
 
     if not os.path.exists(output_path):
         st.error("Hillshade file was not created. Please check the input DEM file.")
@@ -69,7 +65,7 @@ if uploaded_file:
 
     st.success("Hillshade generated!")
 
-    # Display using rasterio and matplotlib
+    # Display hillshade
     with rasterio.open(output_path) as src:
         hillshade = src.read(1)
 
@@ -82,3 +78,25 @@ if uploaded_file:
     # Download link
     with open(output_path, "rb") as f:
         st.download_button("Download Hillshade", f, file_name="hillshade.tif")
+
+    # -------------------------------
+    # PySheds Flow Accumulation Step
+    # -------------------------------
+    st.write("Computing flow accumulation with PySheds...")
+
+    try:
+        grid = Grid.from_raster(input_path, data_name='dem')
+        grid.fill_depressions(data='dem', out_name='filled')
+        grid.flowdir(data='filled', out_name='dir')
+        grid.accumulation(data='dir', out_name='acc')
+
+        acc = grid.view('acc', nodata=np.nan)
+
+        fig2, ax2 = plt.subplots()
+        ax2.imshow(np.log1p(acc), cmap='cubehelix', zorder=1)
+        ax2.set_title("Flow Accumulation (log-scaled)")
+        ax2.axis("off")
+        st.pyplot(fig2)
+
+    except Exception as e:
+        st.error(f"PySheds processing failed: {e}")

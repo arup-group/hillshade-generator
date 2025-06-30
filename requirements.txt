@@ -2,3 +2,5 @@ streamlit
 whitebox
 rasterio
 matplotlib
+pysheds
+numpy
