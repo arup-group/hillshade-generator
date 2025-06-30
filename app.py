@@ -1,16 +1,15 @@
 # app.py
-
 import streamlit as st
-import whitebox
+from whitebox.whitebox_tools import WhiteboxTools
 import os
 from tempfile import NamedTemporaryFile
 import rasterio
 import matplotlib.pyplot as plt
 
 # Initialize WhiteboxTools
-wbt = whitebox.WhiteboxTools()
-wbt.set_whitebox_dir("tools/WBT")  # path to the binary
-wbt.verbose = True  # Enable verbose output for debugging
+wbt = WhiteboxTools(exe_path="tools/WBT/whitebox_tools")  # Direct path to the binary
+wbt.verbose = True
+
 
 st.title("DEM Hillshade Generator using WhiteboxTools")
 
