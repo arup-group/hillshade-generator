@@ -98,42 +98,36 @@ if uploaded_file:
         dirmap = (64, 128, 1, 2, 4, 8, 16, 32)
 
         # Compute flow direction
-        grid.flowdir(inflated, dirmap=dirmap, out_name='dir', nodata_out=np.int32(-1))
+        fdir = grid.flowdir(inflated, dirmap=dirmap, nodata_out=np.int32(-1))
+
+        fig = plt.figure(figsize=(8,6))
+        fig.patch.set_alpha(0)
+
+        plt.imshow(fdir, extent=grid.extent, cmap='viridis', zorder=2)
+        boundaries = ([0] + sorted(list(dirmap)))
+        plt.colorbar(boundaries= boundaries,
+                    values=sorted(dirmap))
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title('Flow direction grid', size=14)
+        plt.grid(zorder=-1)
+        plt.tight_layout()
 
         # Compute flow accumulation
-        grid.accumulation(data='dir', out_name='acc')
+        acc = grid.accumulation(fdir, dirmap=dirmap)
 
-        # View results
-        fdir = grid.view('dir')
-        acc = grid.view('acc')
-
-        # Flow Direction Plot
-        fig_fd, ax_fd = plt.subplots(figsize=(8, 6))
-        fig_fd.patch.set_alpha(0)
-        im_fd = ax_fd.imshow(fdir, extent=grid.extent, cmap='viridis', zorder=2)
-        boundaries = [0] + sorted(list(dirmap))
-        plt.colorbar(im_fd, ax=ax_fd, boundaries=boundaries, values=sorted(dirmap))
-        ax_fd.set_xlabel('Longitude')
-        ax_fd.set_ylabel('Latitude')
-        ax_fd.set_title('Flow Direction Grid')
-        ax_fd.grid(zorder=-1)
+        fig, ax = plt.subplots(figsize=(8,6))
+        fig.patch.set_alpha(0)
+        plt.grid('on', zorder=0)
+        im = ax.imshow(acc, extent=grid.extent, zorder=2,
+                    cmap='cubehelix',
+                    norm=colors.LogNorm(1, acc.max()),
+                    interpolation='bilinear')
+        plt.colorbar(im, ax=ax, label='Upstream Cells')
+        plt.title('Flow Accumulation', size=14)
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
         plt.tight_layout()
-        st.pyplot(fig_fd)
-
-        # Flow Accumulation Plot
-        fig_acc, ax_acc = plt.subplots(figsize=(8, 6))
-        fig_acc.patch.set_alpha(0)
-        ax_acc.grid(True, zorder=0)
-        im_acc = ax_acc.imshow(acc, extent=grid.extent, zorder=2,
-                               cmap='cubehelix',
-                               norm=colors.LogNorm(vmin=1, vmax=np.nanmax(acc)),
-                               interpolation='bilinear')
-        plt.colorbar(im_acc, ax=ax_acc, label='Upstream Cells')
-        ax_acc.set_title('Flow Accumulation')
-        ax_acc.set_xlabel('Longitude')
-        ax_acc.set_ylabel('Latitude')
-        plt.tight_layout()
-        st.pyplot(fig_acc)
 
     except Exception as e:
         st.error(f"PySheds processing failed: {e}")
