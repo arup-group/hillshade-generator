@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pysheds.grid import Grid
 
-st.title("DEM Hillshade & Flow Accumulation Generator")
+st.title("DEM Hillshade, Flow Direction & Accumulation Visualizer")
 
 # Upload DEM
 uploaded_file = st.file_uploader("Upload a DEM file (GeoTIFF)", type=["tif", "tiff"])
@@ -80,23 +80,40 @@ if uploaded_file:
         st.download_button("Download Hillshade", f, file_name="hillshade.tif")
 
     # -------------------------------
-    # PySheds Flow Accumulation Step
+    # PySheds Flow Accumulation & Direction
     # -------------------------------
-    st.write("Computing flow accumulation with PySheds...")
+    st.write("Computing flow direction and accumulation with PySheds...")
 
     try:
         grid = Grid.from_raster(input_path, data_name='dem')
         grid.fill_depressions(data='dem', out_name='filled')
-        grid.flowdir(data='filled', out_name='dir')
+        grid.resolve_flats(data='filled', out_name='inflated')
+
+        # Define D8 direction mapping
+        dirmap = np.array([[  32,  64, 128],
+                           [  16,   0,   1],
+                           [   8,   4,   2]])
+
+        # Compute flow direction with nodata_out = -1
+        grid.flowdir(data='inflated', out_name='dir', dirmap=dirmap, nodata_out=np.int32(-1))
         grid.accumulation(data='dir', out_name='acc')
 
         acc = grid.view('acc', nodata=np.nan)
+        fdir = grid.view('dir', nodata=np.nan)
 
+        # Flow Accumulation Plot
         fig2, ax2 = plt.subplots()
         ax2.imshow(np.log1p(acc), cmap='cubehelix', zorder=1)
         ax2.set_title("Flow Accumulation (log-scaled)")
         ax2.axis("off")
         st.pyplot(fig2)
+
+        # Flow Direction Plot
+        fig3, ax3 = plt.subplots()
+        im = ax3.imshow(fdir, cmap='twilight', interpolation='none')
+        ax3.set_title("Flow Direction (D8 Encoded)")
+        ax3.axis("off")
+        st.pyplot(fig3)
 
     except Exception as e:
         st.error(f"PySheds processing failed: {e}")
