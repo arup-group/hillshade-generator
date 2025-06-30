@@ -112,6 +112,7 @@ if uploaded_file:
         plt.title('Flow direction grid', size=14)
         plt.grid(zorder=-1)
         plt.tight_layout()
+        st.pyplot(fig)
 
         # Compute flow accumulation
         acc = grid.accumulation(fdir, dirmap=dirmap, nodata_out=np.int32(-1))
@@ -128,6 +129,7 @@ if uploaded_file:
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
         plt.tight_layout()
+        st.pyplot(fig)
 
     except Exception as e:
         st.error(f"PySheds processing failed: {e}")
