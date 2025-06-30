@@ -2,6 +2,7 @@
 import streamlit as st
 import os
 import subprocess
+import stat
 from tempfile import NamedTemporaryFile
 import rasterio
 import matplotlib.pyplot as plt
@@ -26,10 +27,21 @@ if uploaded_file:
         st.error(f"Failed to read DEM file: {e}")
         st.stop()
 
+    # Ensure whitebox_tools is executable
+    binary_path = "tools/WBT/whitebox_tools"
+    if not os.access(binary_path, os.X_OK):
+        st.write("Setting executable permission on whitebox_tools...")
+        try:
+            os.chmod(binary_path, os.stat(binary_path).st_mode | stat.S_IEXEC)
+            st.write("Executable permission set.")
+        except Exception as e:
+            st.error(f"Failed to set executable permission: {e}")
+            st.stop()
+
     # Run WhiteboxTools via subprocess
     st.write("Generating hillshade...")
     cmd = [
-        "tools/WBT/whitebox_tools",
+        binary_path,
         "--run=Hillshade",
         f"--dem={input_path}",
         f"--output={output_path}",
